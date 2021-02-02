@@ -1,13 +1,13 @@
 from enum import Enum
 
-from ..exceptions import SaverError
-from .base import BaseSaver
-from .image_saver import ImageSaver
-from .json_saver import JSONSaver
-from .jsonpickle_saver import JSONPickleSaver
-from .pickle_saver import PickleSaver
-from .plydata_saver import PlyDataSaver
-from .yaml_saver import YAMLSaver
+from exceptions import SaverError
+from savers.base import BaseSaver
+from savers.image_saver import ImageSaver
+from savers.json_saver import JSONSaver
+from savers.jsonpickle_saver import JSONPickleSaver
+from savers.pickle_saver import PickleSaver
+from savers.plydata_saver import PlyDataSaver
+from savers.yaml_saver import YAMLSaver
 
 
 class SaverType(Enum):
@@ -23,7 +23,6 @@ class Saver(BaseSaver):
 
     def save(self, obj, key=None, check_exists=True, *args, **kwargs):
         save_as, key = key.split('@', maxsplit=1)
-
         key = key or self.default_save_key
         save_type = SaverType[save_as.upper()]
 
