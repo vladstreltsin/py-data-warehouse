@@ -1,19 +1,16 @@
-from remotes.base import BaseRemote
-from remotes.local import LocalRemote
-from remotes.gs import GSRemote
-from remotes.s3 import S3Remote
-from remotes.hfs import HFSRemote
-from exceptions import RemoteError
-from utils import join, keep_position
+from remotools.remotes.base import BaseRemote
+from remotools.remotes.local import LocalRemote
+from remotools.remotes.gs import GSRemote
+from remotools.remotes.s3 import S3Remote
+from remotools.remotes.hfs import HFSRemote
+from remotools.exceptions import RemoteError
+from remotools.utils import join, keep_position
 import requests
 import os
 import os.path as osp
 import typing as T
 from abc import ABC, abstractmethod
 from sqlitedict import SqliteDict
-from concurrent.futures import ThreadPoolExecutor
-import io
-from functools import partial
 
 
 def parse_params(s: str) -> T.Dict[str, str]:
@@ -219,14 +216,3 @@ class CachingURIRemote(URIRemote):
             return self.cache.contains(key)
 
         return super(CachingURIRemote, self).contains(key)
-
-    def fetch(self, *keys, search_cache=True, max_workers=None):
-        """ Pre-fetch all keys into the cache """
-
-        def download(k):
-            f = io.BytesIO()
-            self.download(f, k, search_cache=search_cache)
-
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            for key in keys:
-                pool.submit(partial(download, key))

@@ -1,8 +1,8 @@
 import io
 import json
 
-from savers.base import BaseSaver
-from utils import keep_position
+from remotools.savers import BaseSaver
+from remotools.utils import keep_position
 
 
 class JSONSaver(BaseSaver):

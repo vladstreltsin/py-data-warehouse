@@ -4,8 +4,8 @@ from os import path as osp
 import numpy as np
 from PIL import Image
 
-from savers.base import BaseSaver
-from utils import keep_position
+from remotools.savers import BaseSaver
+from remotools.utils import keep_position
 
 
 class ImageSaver(BaseSaver):

@@ -1,6 +1,6 @@
-from utils import compute_hash, to_path, keep_position
-from exceptions import HFSError
-from remotes.base import BaseRemote
+from remotools.utils import compute_hash, to_path, keep_position
+from remotools.exceptions import HFSError
+from remotools.remotes.base import BaseRemote
 
 
 class HFSRemote(BaseRemote):

@@ -2,8 +2,8 @@ import io
 
 import jsonpickle
 
-from savers.base import BaseSaver
-from utils import keep_position
+from remotools.savers import BaseSaver
+from remotools.utils import keep_position
 
 # Add support for numpy arrays
 import jsonpickle.ext.numpy as jsonpickle_numpy

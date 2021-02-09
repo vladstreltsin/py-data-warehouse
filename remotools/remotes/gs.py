@@ -1,7 +1,6 @@
 from google.cloud import storage
-
-from remotes.base import BaseRemote
-from utils import join
+from remotools.remotes.base import BaseRemote
+from remotools.utils import join
 
 
 class GSRemote(BaseRemote):

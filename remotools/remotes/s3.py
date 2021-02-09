@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
-from remotes.base import BaseRemote
-from utils import join
+from remotools.remotes.base import BaseRemote
+from remotools.utils import join
 from io import BufferedReader
 
 
