@@ -1,3 +1,2 @@
-# storage
-Remote data managing tools
-TBD
+# remotools
+Working with remote data made easy
