@@ -1,23 +1,23 @@
 import io
-import ruamel.yaml
+import pandas as pd
 from remotools.savers import BaseSaver
 from remotools.utils import keep_position
 
 
-class YAMLSaver(BaseSaver):
+class CSVPandasSaver(BaseSaver):
 
-    def save(self, obj, key=None, check_exists=False, *args, **kwargs):
+    def save(self, obj: pd.DataFrame, key=None, check_exists=False, *args, **kwargs):
         key = key or self.default_save_key
-        yaml = ruamel.yaml.YAML()
         f = io.BytesIO()
         with keep_position(f):
-            yaml.dump(obj, f, *args, **kwargs)
+            f.write(obj.to_csv(*args, **kwargs).encode())
         return self.remote.upload(f, key, check_exists=check_exists)
 
     def load(self, key, search_cache=True, *args, **kwargs):
-        yaml = ruamel.yaml.YAML()
         f = io.BytesIO()
         with keep_position(f):
             self.remote.download(f, key, search_cache=search_cache)
+        return pd.read_csv(f, *args, **kwargs)
 
-        return yaml.load(f)
+
+

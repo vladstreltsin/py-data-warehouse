@@ -10,7 +10,7 @@ from remotools.utils import keep_position
 
 class ImageSaver(BaseSaver):
 
-    def save(self, obj, key=None, check_exists=True, ext=None, *args, **kwargs):
+    def save(self, obj, key=None, check_exists=False, ext=None, *args, **kwargs):
         key = key or self.default_save_key
 
         # Try figuring out the format from the file extension
@@ -26,10 +26,10 @@ class ImageSaver(BaseSaver):
             Image.fromarray(obj).save(f, *args, format=Image.EXTENSION[ext], **kwargs)
         return self.remote.upload(f, key, check_exists=check_exists)
 
-    def load(self, key, *args, **kwargs):
+    def load(self, key, search_cache=True, *args, **kwargs):
         f = io.BytesIO()
         with keep_position(f):
-            self.remote.download(f, key)
+            self.remote.download(f, key, search_cache=search_cache)
         return np.asarray(Image.open(f, *args, **kwargs))
 
     def size(self, key):

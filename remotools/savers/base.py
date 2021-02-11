@@ -11,6 +11,6 @@ class BaseSaver(ABC):
         pass
 
     @abstractmethod
-    def load(self, key, *args, **kwargs):
+    def load(self, key, search_cache=True, *args, **kwargs):
         pass
 

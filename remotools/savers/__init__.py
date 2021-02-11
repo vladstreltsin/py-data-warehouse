@@ -8,6 +8,7 @@ from remotools.savers.jsonpickle_saver import JSONPickleSaver
 from remotools.savers.pickle_saver import PickleSaver
 from remotools.savers.plydata_saver import PlyDataSaver
 from remotools.savers.yaml_saver import YAMLSaver
+from remotools.savers.csvpandas_saver import CSVPandasSaver
 
 
 class SaverType(Enum):
@@ -17,11 +18,12 @@ class SaverType(Enum):
     JSON = 3,
     YAML = 4,
     PLYDATA = 5,
+    CSVPANDAS = 6,
 
 
 class Saver(BaseSaver):
 
-    def save(self, obj, key=None, check_exists=True, *args, **kwargs):
+    def save(self, obj, key=None, check_exists=False, *args, **kwargs):
         save_as, key = key.split('@', maxsplit=1)
         key = key or self.default_save_key
         save_type = SaverType[save_as.upper()]
@@ -44,33 +46,39 @@ class Saver(BaseSaver):
         elif save_type is SaverType.PLYDATA:
             key = PlyDataSaver(self.remote).save(obj=obj, key=key, check_exists=check_exists, *args, **kwargs)
 
+        elif save_type is SaverType.CSVPANDAS:
+            key = CSVPandasSaver(self.remote).save(obj=obj, key=key, check_exists=check_exists, *args, **kwargs)
+
         else:
             raise SaverError(f'Unsupported value for save_as ({save_as})')
 
         return f'{save_as}@{str(key)}'
 
-    def load(self, key, *args, **kwargs):
+    def load(self, key, search_cache=True, *args, **kwargs):
 
         save_as, key = key.split('@', maxsplit=1)
         save_type = SaverType[save_as.upper()]
 
         if save_type is SaverType.JSONPICKLE:
-            return JSONPickleSaver(self.remote).load(key=key, *args, **kwargs)
+            return JSONPickleSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         elif save_type is SaverType.IMAGE:
-            return ImageSaver(self.remote).load(key=key, *args, **kwargs)
+            return ImageSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         elif save_type is SaverType.PICKLE:
-            return PickleSaver(self.remote).load(key=key, *args, **kwargs)
+            return PickleSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         elif save_type is SaverType.JSON:
-            return JSONSaver(self.remote).load(key=key, *args, **kwargs)
+            return JSONSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         elif save_type is SaverType.YAML:
-            return YAMLSaver(self.remote).load(key=key, *args, **kwargs)
+            return YAMLSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         elif save_type is SaverType.PLYDATA:
-            return PlyDataSaver(self.remote).load(key=key, *args, **kwargs)
+            return PlyDataSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
+
+        elif save_type is SaverType.CSVPANDAS:
+            return CSVPandasSaver(self.remote).load(key=key, search_cache=search_cache, *args, **kwargs)
 
         else:
             raise SaverError(f'Unsupported type ({save_as})')

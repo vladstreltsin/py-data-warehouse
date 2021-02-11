@@ -1,6 +1,8 @@
 from google.cloud import storage
+from google.cloud.exceptions import NotFound
 from remotools.remotes.base import BaseRemote
 from remotools.utils import join
+from remotools.exceptions import RemoteError
 
 
 class GSRemote(BaseRemote):
@@ -17,8 +19,11 @@ class GSRemote(BaseRemote):
         project, bucket, blob = path.split(sep='/', maxsplit=2)
 
         with self.download_progress_bar(f, key) as fp:
-            storage.Client(project=project,
-                           credentials=self.credentials).bucket(bucket).blob(blob).download_to_file(fp)
+            try:
+                storage.Client(project=project,
+                               credentials=self.credentials).bucket(bucket).blob(blob).download_to_file(fp)
+            except NotFound as exc:
+                raise RemoteError(f"Key {key} not found") from exc
 
     def upload(self, f, key: str, check_exists=False, *args, **kwargs) -> str:
         if check_exists and self.contains(key):
