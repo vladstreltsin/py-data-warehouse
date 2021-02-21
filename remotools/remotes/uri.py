@@ -1,218 +1,98 @@
 from remotools.remotes.base import BaseRemote
 from remotools.remotes.local import LocalRemote
-from remotools.remotes.gs import GSRemote
-from remotools.remotes.s3 import S3Remote
-from remotools.remotes.hfs import HFSRemote
-from remotools.exceptions import RemoteError
-from remotools.utils import join, keep_position
-import requests
-import os
-import os.path as osp
-import typing as T
-from abc import ABC, abstractmethod
-from sqlitedict import SqliteDict
+from remotools.remotes.web import WebRemote
+from remotools.utils import DictProxy
+from remotools.remotes.exceptions import KeyNotFoundError
+import typing as tp
+import re
 
-
-def parse_params(s: str) -> T.Dict[str, str]:
-    """ parse uri parameter string given as: s = 'p1=v1;p2=v2;...'"""
-    if len(s) == 0:
-        return {}
-
-    params = {}
-    for x in s.split(';'):
-        key, value = x.split('=', maxsplit=1)
-        params[key] = value
-
-    return params
-
-
-def parse_uri(uri):
-    scheme, netloc, url, params, query, fragment = requests.utils.urlparse(uri)
-    key = join(netloc, url)
-    params = parse_params(params)
-    return scheme, key, params
+# A bunch of utility constants
+REMOTE_NAME_RE = re.compile("^[a-zA-Z0-9-]+$")
+REMOTE_NAME_SEPARATOR = '://'
+WEB_REMOTE_NAMES = ['http', 'https']
 
 
 class URIRemote(BaseRemote):
-    """Remote whose keys are given in URI format"""
+    """
+    A remote whose keys that follow a uri-like syntax.
 
-    def __init__(self, *args, remotes=None, **kwargs):
+    This type of remote functions as an 'umbrella' class for other remotes. It allows for the composition
+    of several remotes into a single one. The various remotes are provided in a dictionary whose keys are
+    the remotes' names and the values are the remote instances themselves. If a certain object is identified
+    by the key 'abc' by a remote whose dictionary-key is 'rem1', that object will be identified by the
+    key 'rem1://abc' by the URIRemote.  In general, the syntax is key = <remote_name>://<remote_key>.
+
+    There are several reserved remote names with the following meaning:
+        file - the key is a file in the local file system (Realised with LocalRemote(prefix=None)
+        https, http - used to designate a web URL. Available for download only.
+
+    Attributes
+    ----------
+    remotes
+        A dictionary like object mapping remote names to remotes
+
+    Examples
+    --------
+    >> import io
+    >> f = io.BytesIO()
+    >> remote = URIRemote()
+    >> remote.download(f, 'https://cdn.wallpapersafari.com/81/51/1Bx4Pg.jpg', keep_stream_position=True)
+    >> remote.upload(f, 'file://home/<user>/jungle.jpg')
+    """
+
+    def __init__(self, remotes: tp.Optional[dict]=None, *args, **kwargs):
         super(URIRemote, self).__init__(*args, **kwargs)
-        self.remotes = remotes or {}       # Refactor this to a separate class
+        self.remotes = RemotesDict({'file': LocalRemote()})
+        for name in WEB_REMOTE_NAMES:
+            self.remotes[name] = WebRemote()
+        self.remotes.update(remotes or {})
 
-    def download(self, f, key: str, chunk_size=8192, *args, **kwargs):
+    @staticmethod
+    def parse_key(key):
+        assert REMOTE_NAME_SEPARATOR in key, f'A key must contain the separator {REMOTE_NAME_SEPARATOR} (given: {key})'
+        remote_name, remote_key = key.split('://', maxsplit=1)
 
-        scheme, path, params = parse_uri(key)
+        # In case we deal with a web remote, we'll need the remote name back in the remote key
+        if remote_name in WEB_REMOTE_NAMES:
+            remote_key = key
 
-        # Download from the local file system
-        if scheme == 'file':
-            LocalRemote(progress=False).download(f, path)
+        return remote_name, remote_key
 
-        # Try getting the result from the specified remotes
-        elif scheme in self.remotes:
-            self.remotes[scheme].download(f, path)
+    def _download(self, f, key: str, **kwargs):
+        remote_name, remote_key = self.parse_key(key)
+        if remote_name not in self.remotes:
+            raise KeyNotFoundError(f'No such remote {remote_name}')
 
-        # The default gs remote
-        elif scheme == 'gs':
-            GSRemote(**params).download(f, path)
+        remote = self.remotes[remote_name]
+        remote.download(f, remote_key, progress=False, params=kwargs)
 
-        # The default s3 remote
-        elif scheme == 's3':
-            S3Remote(**params).download(f, path)
+    def _upload(self, f, key: str, **kwargs):
+        remote_name, remote_key = self.parse_key(key)
+        if remote_name not in self.remotes:
+            raise KeyNotFoundError(f'No such remote {remote_name}')
 
-        # The overall default - fallback to general requests get()
-        else:
-            # https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
-            with self.download_progress_bar(f, key) as fp:
-                with requests.get(key, stream=True) as r:
-                    r.raise_for_status()
-                    for chunk in r.iter_content(chunk_size=chunk_size):
-                        fp.write(chunk)
+        remote = self.remotes[remote_name]
+        remote.upload(f, remote_key, progress=False, params=kwargs)
 
-    def upload(self, f, key: str=None, *args, **kwargs):
+    def _contains(self, key: str):
+        remote_name, remote_key = self.parse_key(key)
+        if remote_name not in self.remotes:
+            return False
 
-        scheme, path, params = parse_uri(key)
-
-        # Download from the local file system
-        if scheme == 'file':
-            new_key = LocalRemote(progress=False).upload(f, path)
-
-        # Try getting the result from the specified remotes
-        elif scheme in self.remotes:
-            new_key = self.remotes[scheme].upload(f, path)
-
-        # The default gs remote
-        elif scheme == 'gs':
-            new_key = GSRemote(**params).upload(f, path)
-
-        # The default s3 remote
-        elif scheme == 's3':
-            new_key = S3Remote(**params).upload(f, path)
-
-        else:
-            raise RemoteError(f"Unknown scheme {scheme}")
-
-        return f'{scheme}://{new_key}'
-
-    def contains(self, key: str):
-
-        scheme, path, params = parse_uri(key)
-
-        # Download from the local file system
-        if scheme == 'file':
-            return LocalRemote(progress=False).contains(path)
-
-        # Try getting the result from the specified remotes
-        if scheme in self.remotes:
-            return self.remotes[scheme].contains(path)
-
-        # The default gs remote
-        if scheme == 'gs':
-            return GSRemote(**params).contains(path)
-
-        # The default s3 remote
-        if scheme == 's3':
-            return S3Remote(**params).contains(path)
-
-        return False
+        remote = self.remotes[remote_name]
+        return remote.contains(key)
 
 
-class CacheDB(ABC):
-    """ A base class from """
-    @abstractmethod
-    def __getitem__(self, item):
-        pass
-
-    @abstractmethod
-    def __setitem__(self, key, value):
-        pass
-
-    @abstractmethod
-    def __contains__(self, item):
-        pass
-
-
-class SqliteDictCacheDB:
-
-    def __init__(self, path):
-        os.makedirs(osp.dirname(path), exist_ok=True)
-        self.db_path = path
-
-    def __getitem__(self, item):
-        with SqliteDict(self.db_path) as dct:
-            return dct[item]
+class RemotesDict(DictProxy):
+    """
+    A utility class to hold remotes in a dictionary like structure.
+    """
 
     def __setitem__(self, key, value):
-        with SqliteDict(self.db_path) as dct:
-            dct[key] = value
-            dct.commit()
+        assert isinstance(key, str), f"Remote name must be a string (given: {key})"
+        assert isinstance(value, BaseRemote), f"A remote must be a subclass of {BaseRemote.__name__} (given: {value}"
+        assert REMOTE_NAME_RE.match(key), f"Remote name must only contain alphanumeric " \
+                                          f"characters and/or a hyphen (-) (given: {key})"
 
-    def __contains__(self, item):
-        with SqliteDict(self.db_path) as dct:
-            return item in dct
+        self._data[key] = value
 
-
-class CachingURIRemote(URIRemote):
-    """Same as URIRemote but with a local cache support"""
-
-    def __init__(self, prefix, hfs_width=2, hfs_depth=4, hfs_algorithm='xxh128', remotes=None, *args, **kwargs):
-        super(URIRemote, self).__init__(*args, **kwargs)
-        self.cache = HFSRemote(remote=LocalRemote(prefix=prefix, progress=False),
-                               width=hfs_width, depth=hfs_depth, algorithm=hfs_algorithm)
-
-        self.cache_db = SqliteDictCacheDB(osp.join(prefix, '.cache'))
-        self.remotes = remotes or {}       # Refactor this to a separate class
-
-    def download(self, f, key: str, search_cache=True, update_cache=True, *args, **kwargs):
-        scheme, path, _ = parse_uri(key)
-
-        # This means a direct hash lookup
-        if scheme == '':
-            self.cache.download(f, path)
-            return
-
-        # Check whether the specified key is in the cache
-        if search_cache and key in self.cache_db:
-            path = self.cache_db[key]
-            self.cache.download(f, path)
-            return
-
-        # Download from the remote
-        if update_cache:
-            with keep_position(f):
-                super(CachingURIRemote, self).download(f, key, *args, **kwargs)
-            hid = self.cache.upload(f)
-            self.cache_db[key] = hid
-            return
-
-        super(CachingURIRemote, self).download(f, key, *args, **kwargs)
-
-    def upload(self, f, key: str=None, update_cache=True, check_exists=False, *args, **kwargs):
-        key = key or ''
-        scheme, path, _ = parse_uri(key)
-
-        # This means a direct upload to the cache
-        if scheme == '':
-            if path != '':
-                raise RemoteError("Key cannot be specified when uploading to cache directly")
-            return self.cache.upload(f)
-
-        if update_cache:
-            with keep_position(f):
-                key = super(CachingURIRemote, self).upload(f, key, *args, check_exists=check_exists, **kwargs)
-            hid = self.cache.upload(f, check_exists=check_exists)
-            self.cache_db[key] = hid
-            return key
-
-        return super(CachingURIRemote, self).upload(f, key, *args, check_exists=check_exists, **kwargs)
-
-    def contains(self, key: str):
-        scheme, path, _ = parse_uri(key)
-
-        # This means a direct upload to the cache
-        if scheme == '':
-            if key != '':
-                raise RemoteError("Key cannot be specified when uploading to cache directly")
-            return self.cache.contains(key)
-
-        return super(CachingURIRemote, self).contains(key)

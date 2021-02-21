@@ -1,6 +1,6 @@
 from google.cloud import storage
 from google.cloud.exceptions import NotFound
-from remotools.remotes.base import BaseRemote
+from remotools.remotes_old.base import BaseRemote
 from remotools.utils import join
 from remotools.exceptions import RemoteError
 

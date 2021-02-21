@@ -1,16 +1,17 @@
 import io
 from os import path as osp
-
 import numpy as np
-from PIL import Image
+
 
 from remotools.savers import BaseSaver
 from remotools.utils import keep_position
+from PIL import Image
 
 
 class ImageSaver(BaseSaver):
 
     def save(self, obj, key=None, check_exists=False, ext=None, *args, **kwargs):
+
         key = key or self.default_save_key
 
         # Try figuring out the format from the file extension
@@ -20,6 +21,10 @@ class ImageSaver(BaseSaver):
         # In case format comes out '' or stays None - use the default which is JPEG
         if not ext:
             ext = ext or '.jpg'
+
+        # PIL quirks Image.EXTENSION is initialized upon import
+        if not Image.EXTENSION:
+            Image.init()
 
         f = io.BytesIO()
         with keep_position(f):
