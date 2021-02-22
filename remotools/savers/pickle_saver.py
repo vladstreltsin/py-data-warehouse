@@ -1,21 +1,23 @@
 import io
 import pickle
-
-from remotools.savers import BaseSaver
+from remotools.savers.base import BaseSaver
 from remotools.utils import keep_position
+import typing as tp
 
 
 class PickleSaver(BaseSaver):
 
-    def save(self, obj, key=None, check_exists=False, *args, **kwargs):
-        key = key or self.default_save_key
-        f = io.BytesIO()
-        with keep_position(f):
-            pickle.dump(obj, f, *args, **kwargs)
-        return self.remote.upload(f, key, check_exists=check_exists)
+    def save(self, obj: tp.Any, key: str, upload_params=None, progress=True, **kwargs) -> str:
 
-    def load(self, key, search_cache=True, *args, **kwargs):
         f = io.BytesIO()
         with keep_position(f):
-            self.remote.download(f, key, search_cache=search_cache)
-        return pickle.load(f, *args, **kwargs)
+            pickle.dump(obj, f, **kwargs)
+
+        return self.remote.upload(f, key, progress=progress, params=upload_params)
+
+    def load(self, key: str, download_params=None, progress=True, **kwargs):
+
+        f = io.BytesIO()
+        self.remote.download(f, key, progress=progress, keep_stream_position=True, params=download_params)
+
+        return pickle.load(f, **kwargs)

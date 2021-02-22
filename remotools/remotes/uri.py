@@ -66,13 +66,13 @@ class URIRemote(BaseRemote):
         remote = self.remotes[remote_name]
         remote.download(f, remote_key, progress=False, params=kwargs)
 
-    def _upload(self, f, key: str, **kwargs):
+    def _upload(self, f, key: str, **kwargs) -> str:
         remote_name, remote_key = self.parse_key(key)
         if remote_name not in self.remotes:
             raise KeyNotFoundError(f'No such remote {remote_name}')
 
         remote = self.remotes[remote_name]
-        remote.upload(f, remote_key, progress=False, params=kwargs)
+        return f'{remote_name}{REMOTE_NAME_SEPARATOR}{remote.upload(f, remote_key, progress=False, params=kwargs)}'
 
     def _contains(self, key: str):
         remote_name, remote_key = self.parse_key(key)

@@ -1,5 +1,4 @@
 from remotools.remotes.base import BaseRemote
-from remotools.remotes.hfs import HFSRemote
 
 
 class CachingRemote(BaseRemote):
@@ -34,7 +33,7 @@ class CachingRemote(BaseRemote):
     """
 
     def __init__(self, remote: BaseRemote, cache: BaseRemote, keystore):
-        super(CachingRemote, self).__init__(name=f'Caching<{remote.name}, {cache.name}>')
+        super(CachingRemote, self).__init__(name=f'{self.__class__.__name__}<{remote.name}, {cache.name}>')
         self.remote = remote
         self.cache = cache
         self.keystore = keystore
@@ -44,6 +43,7 @@ class CachingRemote(BaseRemote):
         if (not override_cache) and key in self.keystore:
             # If the key is found in the keystore, look for it in the cache, and get it if possible
             cache_key = self.keystore[key]
+
             if self.cache.contains(cache_key):
                 self.cache.download(f, cache_key, progress=False, params=kwargs)
                 return
@@ -52,6 +52,10 @@ class CachingRemote(BaseRemote):
         # Lets download it and update the cache and the keystore
         self.remote.download(f, key, progress=False, params=kwargs, keep_stream_position=True)
         cache_key = self.cache.upload(f, key, progress=False)
+
+        if key in self.keystore:
+            del self.keystore[key]
+
         self.keystore[key] = cache_key
 
     def _upload(self, f, key: str, **kwargs):
@@ -61,6 +65,8 @@ class CachingRemote(BaseRemote):
         # Update the cache and the key store
         cache_key = self.cache.upload(f, key, progress=False)
         self.keystore[key] = cache_key
+
+        return key
 
     def _contains(self, key: str):
         # Check local cache

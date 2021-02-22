@@ -28,7 +28,15 @@ setup(
 
     extras_require=
     {
+        # Remotes
         "gs": ['google-cloud-storage>=1.35.0'],
-        "s3": ['boto3>=1.16.51', 'botocore>=1.19.51']
+        "s3": ['boto3>=1.16.51', 'botocore>=1.19.51'],
+
+        # Savers
+        "PIL": ['Pillow>=8.0.1', 'numpy>=1.19.2'],
+        "jsonpickle": ['jsonpickle>=1.4.2'],
+        "plyfile": ['plyfile>=0.7.2'],
+        "yaml": ['ruamel.yaml>=0.16.12'],
+        "pandas": ['pandas>=0.24.2']
     }
 )

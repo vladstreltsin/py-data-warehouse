@@ -31,9 +31,6 @@ class HFSRemote(BaseRemote):
     remote
         The wrapped remote backend (a class derived from BaseRemote)
 
-    skip_upload_existing
-        Do not upload keys already contained in the storage
-
     width
         The number of hex string characters belonging to each level in the directory tree. Defaults to 2
 
@@ -45,23 +42,17 @@ class HFSRemote(BaseRemote):
         Defaults to 'md5'
     """
 
-    def __init__(self, remote: BaseRemote, skip_upload_existing=False, width=2, depth=4, algorithm='md5'):
-        super(HFSRemote, self).__init__(name=f'HFS<{remote.name}>')
+    def __init__(self, remote: BaseRemote, width=2, depth=4, algorithm='md5'):
+        super(HFSRemote, self).__init__(name=f'{self.__class__.__name__}<{remote.name}>')
         self.remote = remote
         self.width = width
         self.depth = depth
         self.algorithm = algorithm
 
-        # TODO this parameter is potentially dangerous because in case some remote file was corrupted
-        self.skip_upload_existing = skip_upload_existing
-
     def _upload(self, f, key=None, **kwargs) -> str:
 
         # Figure out the hash of the object to upload
         key = compute_hash(f, algorithm=self.algorithm)
-
-        if self.skip_upload_existing and self.contains(key):
-            return key
 
         # Break it according to the desired directory structure
         path = to_path(key, width=self.width, depth=self.depth)

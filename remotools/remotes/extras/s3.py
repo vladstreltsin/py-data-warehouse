@@ -4,6 +4,7 @@ from io import BufferedReader
 from remotools.remotes.exceptions import UnknownError, KeyNotFoundError
 
 # TODO wrap boto3 commands with standardized exceptions
+# TODO add documentation to S3Remote class
 
 KEY_SEPARATOR = '/'
 

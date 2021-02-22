@@ -67,9 +67,9 @@ class DictProxy:
     Wraps a dictionary and allows for its methods specializations.
     """
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         self._data = {}
-        self.update(data)
+        self.update(data or {})
 
     def __len__(self):
         return len(self._data)

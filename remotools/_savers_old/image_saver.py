@@ -3,7 +3,7 @@ from os import path as osp
 import numpy as np
 
 
-from remotools.savers import BaseSaver
+from remotools._savers_old import BaseSaver
 from remotools.utils import keep_position
 from PIL import Image
 

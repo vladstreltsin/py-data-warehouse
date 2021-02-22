@@ -1,8 +1,8 @@
-from remotools.remotes_old.base import BaseRemote
-from remotools.remotes_old.local import LocalRemote
-from remotools.remotes_old.gs import GSRemote
-from remotools.remotes_old.s3 import S3Remote
-from remotools.remotes_old.hfs import HFSRemote
+from remotools._remotes_old.base import BaseRemote
+from remotools._remotes_old.local import LocalRemote
+from remotools._remotes_old.gs import GSRemote
+from remotools._remotes_old.s3 import S3Remote
+from remotools._remotes_old.hfs import HFSRemote
 from remotools.exceptions import RemoteError
 from remotools.utils import join, keep_position
 import requests

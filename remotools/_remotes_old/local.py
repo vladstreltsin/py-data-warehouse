@@ -1,6 +1,6 @@
 import os
 from shutil import copyfileobj
-from remotools.remotes_old.base import BaseRemote
+from remotools._remotes_old.base import BaseRemote
 
 
 class LocalRemote(BaseRemote):
