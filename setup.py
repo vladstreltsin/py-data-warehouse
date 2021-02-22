@@ -26,8 +26,14 @@ setup(
 
     find_packages=['remotools'],
 
-    extras_require=
-    {
+    install_requires=[
+        'tqdm>=4.51.0,<5',
+        'xxhash>=2.0.0',
+        'requests>=2.24.0',
+        'sqlitedict>= 1.7.0'
+    ],
+
+    extras_require={
         # Remotes
         "gs": ['google-cloud-storage>=1.35.0'],
         "s3": ['boto3>=1.16.51', 'botocore>=1.19.51'],
