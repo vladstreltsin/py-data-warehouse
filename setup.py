@@ -22,7 +22,7 @@ setup(
 
     long_description_content_type="text/markdown",
 
-    url="https://github.com/vladstreltsin/storage.git",
+    url="https://github.com/vladstreltsin/remotools.git",
 
     find_packages=['remotools'],
 
