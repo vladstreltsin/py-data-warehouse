@@ -1,5 +1,5 @@
 from .base import BaseRemote
-from .caching import CachingRemote
+from .caching import CachingRemote, HFSLocalCachingRemote
 from .hfs import HFSRemote
 from .local import LocalRemote
 from .web import WebRemote

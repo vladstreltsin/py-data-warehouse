@@ -3,6 +3,7 @@ import tqdm
 from abc import ABC, abstractmethod
 import typing as tp
 from remotools.utils import keep_position
+from remotools.concurrent.remote import ConcurrentRemote
 
 
 class BaseRemote(ABC):
@@ -42,6 +43,10 @@ class BaseRemote(ABC):
 
     contains(key)
         Checks whether a given key exists in on the target storage
+
+    concurrent(**kwargs) -> ConcurrentRemote
+        Converts the remote into a concurrent remote that utilizes threads to speed up the operations.
+        Returns an instance of a ConcurrentRemote.
 
     Abstract Methods
     ----------------
@@ -203,3 +208,6 @@ class BaseRemote(ABC):
     @abstractmethod
     def _contains(self, key: str) -> bool:
         pass
+
+    def concurrent(self, **kwargs) -> ConcurrentRemote:
+        return ConcurrentRemote(remote=self, **kwargs)

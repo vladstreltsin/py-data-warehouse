@@ -1,4 +1,14 @@
+from __future__ import annotations
 from remotools.remotes.base import BaseRemote
+from remotools.remotes.hfs import HFSRemote
+from remotools.remotes.local import LocalRemote
+from remotools.concurrent.remote import ConcurrentRemote
+from concurrent.futures import Future
+import typing as tp
+from io import BytesIO
+from sqlitedict import SqliteDict
+import os.path as osp
+import os
 
 
 class CachingRemote(BaseRemote):
@@ -78,3 +88,53 @@ class CachingRemote(BaseRemote):
         # Check remote if key wasn't found in the cache
         return self.remote.contains(key)
 
+    # Extra methods
+    def fetch(self, key: str, override_cache=False, progress=True, **kwargs):
+        """ Calling this method will make sure that the given key is found in the cache """
+
+        # Check if key already exists in the cache
+        if (not override_cache) and key in self.keystore and self.cache.contains(self.keystore[key]):
+            return
+
+        # If we got here that means the key doesn't exist either in the keystore or in the cache
+        # Lets download it and update the cache and the keystore
+        f = BytesIO()
+        self.remote.download(f, key, progress=progress, params=kwargs, keep_stream_position=True)
+        cache_key = self.cache.upload(f, key, progress=False)
+
+        if key in self.keystore:
+            del self.keystore[key]
+
+        self.keystore[key] = cache_key
+
+    def concurrent(self, **kwargs)-> ConcurrentCachingRemote:
+        return ConcurrentCachingRemote(self, **kwargs)
+
+
+class ConcurrentCachingRemote(ConcurrentRemote):
+    """ An adaptation of the ConcurrentRemote class to support fetching """
+
+    def __init__(self, remote: CachingRemote, **kwargs):
+        if not isinstance(remote, CachingRemote):
+            raise TypeError(f"Remote must be of type {CachingRemote.__name__}")
+        super(ConcurrentCachingRemote, self).__init__(remote, **kwargs)
+
+    def fetch(self, key: str, override_cache=False, progress=True, **kwargs) -> Future:
+
+        return self._pool.submit(self.remote.fetch,
+                                 key=key,
+                                 override_cache=override_cache,
+                                 progress=progress,
+                                 **kwargs)
+
+
+class HFSLocalCachingRemote(CachingRemote):
+    """ A specialized version of CachingRemote initializes a local cache and provides a keystore """
+
+    def __init__(self, remote: BaseRemote, local_cache_path: str, hfs_params: tp.Optional[tp.Dict]=None):
+        os.makedirs(local_cache_path, exist_ok=True)
+        super(HFSLocalCachingRemote, self).__init__(remote=remote,
+                                                    cache=HFSRemote(LocalRemote(prefix=local_cache_path),
+                                                                    **(hfs_params or {})),
+                                                    keystore=SqliteDict(filename=osp.join(local_cache_path, '.index'),
+                                                                        autocommit=True))

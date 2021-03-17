@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from remotools.remotes.base import BaseRemote
 import typing as tp
+from remotools.concurrent.saver import ConcurrentSaver
 
 
 class BaseSaver(ABC):
@@ -15,6 +16,12 @@ class BaseSaver(ABC):
     ----------
     remote
         The Remote backend
+
+    Methods
+    -------
+    concurrent(**kwargs) -> ConcurrentSaver
+        Converts the saver into a concurrent saver that utilizes threads to speed up the operations.
+        Returns an instance of a ConcurrentSaver.
 
     Abstract Methods
     ----------------
@@ -38,3 +45,5 @@ class BaseSaver(ABC):
     def load(self, key: str, download_params=None, progress=True, **kwargs) -> tp.Any:
         pass
 
+    def concurrent(self, **kwargs) -> ConcurrentSaver:
+        return ConcurrentSaver(saver=self, **kwargs)
