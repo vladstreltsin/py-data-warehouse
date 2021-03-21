@@ -13,6 +13,10 @@ class JSONPickleSaver(BaseSaver):
         import jsonpickle.ext.numpy
         jsonpickle.ext.numpy.register_handlers()
 
+        # Add support from pandas dataframes
+        import jsonpickle.ext.pandas
+        jsonpickle.ext.pandas.register_handlers()
+
     def save(self, obj: tp.Any, key: str, upload_params=None, progress=True, **kwargs) -> str:
         import jsonpickle
         f = io.BytesIO()
