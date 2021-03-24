@@ -24,6 +24,7 @@ class S3Remote(BaseRemote):
         self.region_name = region_name
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
+        assert isinstance(self.prefix, str)
 
     def _download(self, f, key: str, **kwargs):
         import boto3

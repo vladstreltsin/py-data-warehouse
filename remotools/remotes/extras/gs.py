@@ -38,6 +38,7 @@ class GSRemote(BaseRemote):
         # TODO credentials require a particular format, not the file that can be set in os.environ
         self.prefix = prefix or ''
         self.credentials = credentials
+        assert isinstance(self.prefix, str)
 
     def _download(self, f, key: str, **kwargs):
 

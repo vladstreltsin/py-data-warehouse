@@ -34,7 +34,7 @@ class BaseSaver(ABC):
     """
 
     def __init__(self, remote: BaseRemote):
-        assert isinstance(remote, BaseRemote), f"remote must be an derived from {BaseRemote.__name__}"
+        assert isinstance(remote, BaseRemote), f"remote must be an derived from {BaseRemote.__name__}, (got {remote})"
         self.remote = remote
 
     @abstractmethod

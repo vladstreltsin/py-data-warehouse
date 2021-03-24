@@ -1,7 +1,8 @@
+from __future__ import annotations
 from remotools.remotes.base import BaseRemote
 from remotools.remotes.local import LocalRemote
 from remotools.remotes.web import WebRemote
-from remotools.utils import DictProxy
+from collections import UserDict
 from remotools.remotes.exceptions import KeyNotFoundError
 import typing as tp
 import re
@@ -42,7 +43,7 @@ class URIRemote(BaseRemote):
 
     def __init__(self, remotes: tp.Optional[dict]=None, *args, **kwargs):
         super(URIRemote, self).__init__(*args, **kwargs)
-        self.remotes = RemotesDict({'file': LocalRemote()})
+        self.remotes = RemotesDict(dict={'file': LocalRemote()})
         for name in WEB_REMOTE_NAMES:
             self.remotes[name] = WebRemote()
         self.remotes.update(remotes or {})
@@ -83,7 +84,7 @@ class URIRemote(BaseRemote):
         return remote.contains(key)
 
 
-class RemotesDict(DictProxy):
+class RemotesDict(UserDict):
     """
     A utility class to hold remotes in a dictionary like structure.
     """
@@ -94,5 +95,6 @@ class RemotesDict(DictProxy):
         assert REMOTE_NAME_RE.match(key), f"Remote name must only contain alphanumeric " \
                                           f"characters and/or a hyphen (-) (given: {key})"
 
-        self._data[key] = value
+        super(RemotesDict, self).__setitem__(key, value)
+
 

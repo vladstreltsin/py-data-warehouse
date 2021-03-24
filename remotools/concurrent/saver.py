@@ -45,11 +45,13 @@ class ConcurrentSaver:
 
         futures = []
         for key, obj in zip(keys, objs):
-            future = self.async_save(obj=obj, key=key, upload_params=upload_params, progress=progress, **kwargs)
+            future = self.async_save(obj=obj, key=key, upload_params=upload_params, progress=False, **kwargs)
             futures.append(future)
 
         # TODO add retries handling
-        for future in as_completed(futures):
+        for future in tqdm.tqdm(as_completed(futures),
+                                total=len(futures), desc=f"Concurrent save  by {self.saver.__class__.__name__} "
+                                                         f"over {self.saver.remote.name}"):
             if future.exception() is not None:
                 raise future.exception()
 
@@ -64,11 +66,13 @@ class ConcurrentSaver:
 
         futures = []
         for key in keys:
-            future = self.async_load(key=key, download_params=download_params, progress=progress, **kwargs)
+            future = self.async_load(key=key, download_params=download_params, progress=False, **kwargs)
             futures.append(future)
 
         # TODO add retries handling
-        for future in as_completed(futures):
+        for future in tqdm.tqdm(as_completed(futures),
+                                total=len(futures), desc=f"Concurrent load  by {self.saver.__class__.__name__} "
+                                                         f"over {self.saver.remote.name}"):
             if future.exception() is not None:
                 raise future.exception()
 
