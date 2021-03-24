@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import typing as tp
 from remotools.utils import keep_position
 from remotools.concurrent.remote import ConcurrentRemote
+import io
 
 
 class BaseRemote(ABC):
@@ -211,3 +212,11 @@ class BaseRemote(ABC):
 
     def concurrent(self, **kwargs) -> ConcurrentRemote:
         return ConcurrentRemote(remote=self, **kwargs)
+
+    def copy(self, src_key, dst_key, progress=True,
+             download_params: tp.Optional[dict]=None,
+             upload_params: tp.Optional[dict]=None) -> str:
+
+        f = io.BytesIO()
+        self.download(f, src_key, progress=progress, keep_stream_position=True, params=download_params)
+        return self.upload(f, dst_key, progress=progress, params=upload_params)

@@ -5,6 +5,9 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from remotools.remotes.base import BaseRemote
 
+# TODO add concurrent_copy (download one uri, upload to another uri)
+# TODO change download -> async_download etc
+
 
 class ConcurrentRemote:
 
@@ -42,3 +45,12 @@ class ConcurrentRemote:
     def contains(self, key) -> Future:
 
         return self._pool.submit(self.remote.contains, key=key)
+
+    def copy(self, src_key, dst_key, progress=True,
+             download_params: tp.Optional[dict]=None,
+             upload_params: tp.Optional[dict]=None) -> Future:
+        return self._pool.submit(self.remote.copy(src_key=src_key,
+                                                  dst_key=dst_key,
+                                                  progress=progress,
+                                                  download_params=download_params,
+                                                  upload_params=upload_params))

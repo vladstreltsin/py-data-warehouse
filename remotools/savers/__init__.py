@@ -7,3 +7,4 @@ from .pickle_saver import PickleSaver
 from .pil_image_saver import PILImageSaver
 from .plydata_saver import PlyDataSaver
 from .yaml_saver import YAMLSaver
+from .text_saver import TextSaver
