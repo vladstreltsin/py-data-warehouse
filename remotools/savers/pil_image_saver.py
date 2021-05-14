@@ -36,7 +36,7 @@ class PILImageSaver(BaseSaver):
 
         """
 
-        from PIL import Image
+        Image = self._import_pil_image()
 
         # Try figuring out the format from the file extension
         if not ext and key:
@@ -54,7 +54,7 @@ class PILImageSaver(BaseSaver):
 
     def load(self, key: str, download_params=None, progress=True, **kwargs):
 
-        from PIL import Image
+        Image = self._import_pil_image()
         import numpy as np
 
         f = io.BytesIO()
@@ -63,7 +63,7 @@ class PILImageSaver(BaseSaver):
         return np.asarray(Image.open(f, **kwargs))
 
     def shape(self, key, download_params=None, progress=True, **kwargs):
-        from PIL import Image
+        Image = self._import_pil_image()
 
         f = io.BytesIO()
         self.remote.download(f, key, params=download_params, progress=progress, keep_stream_position=True)
@@ -72,3 +72,11 @@ class PILImageSaver(BaseSaver):
         image = Image.open(f, **kwargs)
         width, height = image.size
         return height, width
+
+    def _import_pil_image(self):
+        # The way PIL.Image works is mega weird. Sometimes it fails to initialize
+        from PIL import Image
+        if not Image._initialized:
+            Image.preinit()
+            Image.init()
+        return Image

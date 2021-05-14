@@ -49,8 +49,8 @@ class ConcurrentRemote:
     def copy(self, src_key, dst_key, progress=True,
              download_params: tp.Optional[dict]=None,
              upload_params: tp.Optional[dict]=None) -> Future:
-        return self._pool.submit(self.remote.copy(src_key=src_key,
-                                                  dst_key=dst_key,
-                                                  progress=progress,
-                                                  download_params=download_params,
-                                                  upload_params=upload_params))
+        return self._pool.submit(self.remote.copy, src_key=src_key,
+                                                   dst_key=dst_key,
+                                                   progress=progress,
+                                                   download_params=download_params,
+                                                   upload_params=upload_params)

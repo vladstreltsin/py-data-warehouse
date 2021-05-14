@@ -32,7 +32,7 @@ class LocalRemote(BaseRemote):
 
     def __init__(self, prefix=None, *args, **kwargs):
         super(LocalRemote, self).__init__(*args, **kwargs)
-        self.prefix = prefix or os.path.sep
+        self.prefix = os.path.realpath(os.path.expandvars(prefix)) if prefix is not None else os.path.sep
         assert isinstance(self.prefix, str)
 
     def _full_path(self, key):

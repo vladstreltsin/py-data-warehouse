@@ -52,7 +52,7 @@ class S3Remote(BaseRemote):
         # A hack around boto3 closing the file upon uploading
         # https://github.com/boto/s3transfer/issues/80
         f = NonCloseableBufferedReader(f)
-
+        
         boto3.client('s3', region_name=self.region_name,
                      aws_access_key_id=self.aws_access_key_id,
                      aws_secret_access_key=self.aws_secret_access_key,

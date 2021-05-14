@@ -51,7 +51,7 @@ class URIRemote(BaseRemote):
     @staticmethod
     def parse_key(key):
         assert REMOTE_NAME_SEPARATOR in key, f'A key must contain the separator {REMOTE_NAME_SEPARATOR} (given: {key})'
-        remote_name, remote_key = key.split('://', maxsplit=1)
+        remote_name, remote_key = key.split(REMOTE_NAME_SEPARATOR, maxsplit=1)
 
         # In case we deal with a web remote, we'll need the remote name back in the remote key
         if remote_name in WEB_REMOTE_NAMES:
@@ -77,11 +77,12 @@ class URIRemote(BaseRemote):
 
     def _contains(self, key: str):
         remote_name, remote_key = self.parse_key(key)
+
         if remote_name not in self.remotes:
             return False
 
         remote = self.remotes[remote_name]
-        return remote.contains(key)
+        return remote.contains(remote_key)
 
 
 class RemotesDict(UserDict):

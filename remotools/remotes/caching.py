@@ -9,6 +9,10 @@ from io import BytesIO
 from sqlitedict import SqliteDict
 import os.path as osp
 import os
+import logging
+
+# This will prevent SqliteDict from showing tons of garbage
+logging.getLogger('sqlitedict').setLevel(level=logging.WARNING)
 
 
 class CachingRemote(BaseRemote):
@@ -128,13 +132,37 @@ class ConcurrentCachingRemote(ConcurrentRemote):
                                  **kwargs)
 
 
+class SqliteDictKeystore:
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def __getitem__(self, item):
+        with SqliteDict(filename=self.filename, autocommit=True) as db:
+            return db[item]
+
+    def __setitem__(self, key, value):
+        with SqliteDict(filename=self.filename, autocommit=True) as db:
+            db[key] = value
+
+    def __contains__(self, item):
+        with SqliteDict(filename=self.filename, autocommit=True) as db:
+            return item in db
+
+
 class HFSLocalCachingRemote(CachingRemote):
     """ A specialized version of CachingRemote initializes a local cache and provides a keystore """
 
     def __init__(self, remote: BaseRemote, local_cache_path: str, hfs_params: tp.Optional[tp.Dict]=None):
+
+        # Expand environmental variables in the given path and create the directory
+        local_cache_path = os.path.realpath(os.path.expandvars(local_cache_path))
         os.makedirs(local_cache_path, exist_ok=True)
+
         super(HFSLocalCachingRemote, self).__init__(remote=remote,
                                                     cache=HFSRemote(LocalRemote(prefix=local_cache_path),
                                                                     **(hfs_params or {})),
-                                                    keystore=SqliteDict(filename=osp.join(local_cache_path, '.index'),
-                                                                        autocommit=True))
+                                                    # keystore=SqliteDict(filename=osp.join(local_cache_path, '.index'),
+                                                    #                     autocommit=True),
+                                                    keystore=SqliteDictKeystore(filename=osp.join(local_cache_path,
+                                                                                                  '.index')))
