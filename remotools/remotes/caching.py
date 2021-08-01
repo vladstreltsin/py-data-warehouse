@@ -2,7 +2,7 @@ from __future__ import annotations
 from remotools.remotes.base import BaseRemote
 from remotools.remotes.hfs import HFSRemote
 from remotools.remotes.local import LocalRemote
-from remotools.concurrent.remote import ConcurrentRemote
+from remotools.parallel.remote import ConcurrentRemote
 from concurrent.futures import Future
 import typing as tp
 from io import BytesIO

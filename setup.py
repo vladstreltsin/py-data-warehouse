@@ -30,7 +30,8 @@ setup(
         'tqdm>=4.51.0,<5',
         'xxhash>=2.0.0',
         'requests>=2.24.0',
-        'sqlitedict>= 1.7.0'
+        'sqlitedict>= 1.7.0',
+        'scalpl'
     ],
 
     extras_require={
@@ -43,6 +44,7 @@ setup(
         "jsonpickle": ['jsonpickle>=1.4.2'],
         "plyfile": ['plyfile>=0.7.2'],
         "yaml": ['ruamel.yaml>=0.16.12'],
-        "pandas": ['pandas>=0.24.2']
+        "pandas": ['pandas>=0.24.2'],
+        "torch": ['pytorch']
     }
 )

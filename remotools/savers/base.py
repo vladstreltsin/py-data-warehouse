@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from remotools.remotes.base import BaseRemote
 import typing as tp
-from remotools.concurrent.saver import ConcurrentSaver
+from remotools.parallel.saver import ConcurrentSaver
 
 
 class BaseSaver(ABC):

@@ -28,6 +28,7 @@ class S3Remote(BaseRemote):
 
     def _download(self, f, key: str, **kwargs):
         import boto3
+        from botocore.exceptions import ClientError
 
         path = join(self.prefix, key)
         result = path.split(sep=KEY_SEPARATOR, maxsplit=1)
@@ -35,10 +36,20 @@ class S3Remote(BaseRemote):
             raise KeyNotFoundError(f'No key corresponding to {path} (must contain at least one separator)')
         bucket, blob = result
 
-        boto3.client('s3', region_name=self.region_name,
-                     aws_access_key_id=self.aws_access_key_id,
-                     aws_secret_access_key=self.aws_secret_access_key
-                     ).download_fileobj(bucket, blob, f)
+        try:
+            session = boto3.session.Session()
+            session.client('s3', region_name=self.region_name,
+                           aws_access_key_id=self.aws_access_key_id,
+                           aws_secret_access_key=self.aws_secret_access_key,
+                           ).download_fileobj(bucket, blob, f)
+
+            # boto3.client('s3', region_name=self.region_name,
+            #              aws_access_key_id=self.aws_access_key_id,
+            #              aws_secret_access_key=self.aws_secret_access_key
+            #              ).download_fileobj(bucket, blob, f)
+
+        except ClientError as e:
+            raise KeyNotFoundError from e
 
     def _upload(self, f, key: str, **kwargs) -> str:
         import boto3
@@ -52,11 +63,19 @@ class S3Remote(BaseRemote):
         # A hack around boto3 closing the file upon uploading
         # https://github.com/boto/s3transfer/issues/80
         f = NonCloseableBufferedReader(f)
-        
-        boto3.client('s3', region_name=self.region_name,
-                     aws_access_key_id=self.aws_access_key_id,
-                     aws_secret_access_key=self.aws_secret_access_key,
-                     ).upload_fileobj(f, bucket, blob)
+
+        session = boto3.session.Session()
+        session.client('s3', region_name=self.region_name,
+                       aws_access_key_id=self.aws_access_key_id,
+                       aws_secret_access_key=self.aws_secret_access_key,
+                       ).upload_fileobj(f, bucket, blob)
+
+        # This doesn't seem to handle multi-threading
+        # boto3.client('s3', region_name=self.region_name,
+        #              aws_access_key_id=self.aws_access_key_id,
+        #              aws_secret_access_key=self.aws_secret_access_key,
+        #              ).upload_fileobj(f, bucket, blob)
+
 
         # https://github.com/boto/s3transfer/issues/80
         f.detach()
@@ -75,10 +94,15 @@ class S3Remote(BaseRemote):
 
         # https://stackoverflow.com/questions/33842944/check-if-a-key-exists-in-a-bucket-in-s3-using-boto3
         try:
-            boto3.resource('s3', region_name=self.region_name,
-                           aws_access_key_id=self.aws_access_key_id,
-                           aws_secret_access_key=self.aws_secret_access_key,
-                           ).Object(bucket, blob).load()
+            session = boto3.session.Session()
+            session.resource('s3', region_name=self.region_name,
+                             aws_access_key_id=self.aws_access_key_id,
+                             aws_secret_access_key=self.aws_secret_access_key,
+                            ).Object(bucket, blob).load()
+            # boto3.resource('s3', region_name=self.region_name,
+            #                aws_access_key_id=self.aws_access_key_id,
+            #                aws_secret_access_key=self.aws_secret_access_key,
+            #                ).Object(bucket, blob).load()
 
         except ClientError as e:
             if e.response['Error']['Code'] == "404":

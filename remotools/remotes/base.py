@@ -3,7 +3,7 @@ import tqdm
 from abc import ABC, abstractmethod
 import typing as tp
 from remotools.utils import keep_position
-from remotools.concurrent.remote import ConcurrentRemote
+from remotools.parallel.remote import ConcurrentRemote
 import io
 
 
