@@ -3,7 +3,6 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# TODO xxhash as extra install option
 
 setup(
     name="remotools",
@@ -31,6 +30,7 @@ setup(
         'xxhash>=2.0.0',
         'requests>=2.24.0',
         'sqlitedict>= 1.7.0',
+        'cachetools',
         'scalpl'
     ],
 

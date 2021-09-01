@@ -80,3 +80,21 @@ class PILImageSaver(BaseSaver):
             Image.preinit()
             Image.init()
         return Image
+
+
+class PILImageSaverPNG(PILImageSaver):
+    """  Saves images in the PNG format """
+
+    def save(self, obj, key: str, ext=None, upload_params=None, progress=True, **kwargs) -> str:
+        return super(PILImageSaverPNG, self).save(obj=obj, key=key, ext='.png',
+                                                  upload_params=upload_params,
+                                                  progress=progress, **kwargs)
+
+
+class PILImageSaverJPG(PILImageSaver):
+    """  Saves images in the JPG format """
+
+    def save(self, obj, key: str, ext=None, upload_params=None, progress=True, **kwargs) -> str:
+        return super(PILImageSaverJPG, self).save(obj=obj, key=key, ext='.jpg',
+                                                  upload_params=upload_params,
+                                                  progress=progress, **kwargs)
